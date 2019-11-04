@@ -56,11 +56,11 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 		const NxCoreHeader& ch = pNxCoreMessage->coreHeader;
 		const NxTime& t = pNxCoreSys->nxTime;
 
-		//std::string exchange = nxCoreClass.GetDefinedString(NxST_EXCHANGE, ch.ListedExg);
-		//std::cout << exchange.substr(0, 3) << "\n";
-		//if (exchange.substr(0, 3) == "IEX") {
-		//std::cout << "*******************IEX FOUND!!********************\n";
-
+		std::string exchange = nxCoreClass.GetDefinedString(NxST_EXCHANGE, ch.ListedExg);
+		std::cout << exchange.substr(0, 3) << "\n";
+		if (exchange.substr(0, 3) == "IEX") {
+			std::cout << "*******************IEX FOUND!!********************\n";
+		}
 		#pragma omp critical 
 		{
 			char symbol[23];
@@ -78,7 +78,7 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 				nt.TotalVolume,
 				nxCoreClass.PriceToDouble(nt.NetChange, nt.PriceType));
 		}
-		//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
 
 	break;
@@ -89,24 +89,23 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 
 
 int main(int argc, char** argv)
-{
-
-	
-	if (!nxCoreClass.LoadNxCore("C:\\Users\\Josh\\source\\repos\\EveryTrade\\x64\\Debug\\NxCoreAPI.dll"))
+{	
+	if (!nxCoreClass.LoadNxCore("C:\\Users\\Josh\\source\\repos\\EveryTrade\\NxCoreAPI.dll"))
 	{
 		fprintf(stderr, "Can't find NxCoreAPI.dll\n");
 		system("pause");
 	}
 
+	for (int i = 0; i < argc; i++) {
+		std::cout << argv[i] << "\n";
+	}
 	// Place the python script in the directory containing the tape files.
 	// then replace the line below with the formatted array declaration outputted by the python script i.e. std::string files[1] = {"20080101.GS.nx2"};
 	
-	std::vector<std::string> files = { "C:\\Users\\Josh\\source\\repos\\EveryTrade\\EveryTrade\\20080401.GS.nx2", "C:\\Users\\Josh\\source\\repos\\EveryTrade\\EveryTrade\\20080402.GS.nx2",
-										"C:\\Users\\Josh\\source\\repos\\EveryTrade\\EveryTrade\\20180321.GS.nx2" };
-
-	omp_set_num_threads(3);
+	std::vector<std::string> files = { "C:\\Users\\Josh\\source\\repos\\EveryTrade\\EveryTrade\\20080401.GS.nx2", "C:\\Users\\Josh\\source\\repos\\EveryTrade\\EveryTrade\\20080402.GS.nx2"};
+	omp_set_num_threads(2);
 	std::cout << omp_get_num_threads() << " threads running\n";
-	#pragma omp parallel for num_threads(3) schedule(static)
+	#pragma omp parallel for num_threads(2)
 	for (int i = files.size() - 1; i >= 0; i--) {
 		#pragma omp critical
 		{
@@ -114,7 +113,6 @@ int main(int argc, char** argv)
 		}
 		std::string s = files[i];
 		nxCoreClass.ProcessTape(s.c_str(), 0, NxCF_EXCLUDE_CRC_CHECK, 0, nxCoreCallback);
-
 	}
 
 	system("pause");
