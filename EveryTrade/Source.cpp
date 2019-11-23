@@ -50,24 +50,22 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 {
 	switch (pNxCoreMessage->MessageType)
 	{
+	
 	case NxMSG_TRADE:
 	{
 		const NxCoreTrade& nt = pNxCoreMessage->coreData.Trade;
 		const NxCoreHeader& ch = pNxCoreMessage->coreHeader;
 		const NxTime& t = pNxCoreSys->nxTime;
-
-		std::string exchange = nxCoreClass.GetDefinedString(NxST_EXCHANGE, ch.ListedExg);
-		std::cout << exchange.substr(0, 3) << "\n";
-		if (exchange.substr(0, 3) == "IEX") {
-			std::cout << "*******************IEX FOUND!!********************\n";
-		}
+		const char* lexchange = nxCoreClass.GetDefinedString(NxST_EXCHANGE, ch.ListedExg);
+		const char* rexchange = nxCoreClass.GetDefinedString(NxST_EXCHANGE, ch.ReportingExg);
 		#pragma omp critical 
 		{
 			char symbol[23];
 			getSymbol(pNxCoreMessage, symbol);
-			std::cout << "thread " << omp_get_thread_num() << " of " << omp_get_num_threads() << " total: ";
-			printf("%.2d:%.2d:%.2d.%.3d %s Price(%ld@%.2lf) O(%.2lf) H(%.2lf) L(%.2lf) C(%.2lf) V(%I64d) Net(%.2lf)\n",
+			printf("%.2d:%.2d:%.2d.%.3d, Reporting:%s, Listed:%s, %s, Price(%ld@%.2lf), O(%.2lf), H(%.2lf), L(%.2lf), C(%.2lf), V(%I64d), Net(%.2lf)\n",
 				(int)t.Hour, (int)t.Minute, (int)t.Second, (int)t.Millisecond,
+				rexchange,
+				lexchange,
 				symbol,
 				nt.Size,
 				nxCoreClass.PriceToDouble(nt.Price, nt.PriceType),
@@ -79,6 +77,30 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 				nxCoreClass.PriceToDouble(nt.NetChange, nt.PriceType));
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	}
+	
+	case NxMSG_EXGQUOTE:
+	{
+		const NxCoreQuote& nq = pNxCoreMessage->coreData.ExgQuote.coreQuote;
+		const NxCoreHeader& ch = pNxCoreMessage->coreHeader;
+		const NxTime& t = pNxCoreSys->nxTime;
+		const char* exchange = nxCoreClass.GetDefinedString(NxST_EXCHANGE, ch.ReportingExg);
+		const char* listedexg = nxCoreClass.GetDefinedString(NxST_EXCHANGE, ch.ListedExg);
+		char symbol[23];
+		getSymbol(pNxCoreMessage, symbol);
+		printf("%.2d:%.2d:%.2d.%.3d, Reporting:%s, Listed:%s, %s, Ask(%ld@%.2lf), Bid(%ld@%.2lf), AskChange(%.2lf), BidChange(%.2lf), AskSizeChange(%.2lf), BidSizeChange(%.2lf)\n",
+			(int)t.Hour, (int)t.Minute, (int)t.Second, (int)t.Millisecond,
+			exchange,
+			listedexg,
+			symbol,
+			nq.AskSize,
+			nxCoreClass.PriceToDouble(nq.AskPrice, nq.PriceType),
+			nq.BidSize,
+			nxCoreClass.PriceToDouble(nq.BidPrice, nq.PriceType),
+			nxCoreClass.PriceToDouble(nq.AskPriceChange, nq.PriceType),
+			nxCoreClass.PriceToDouble(nq.BidPriceChange, nq.PriceType),
+			nxCoreClass.PriceToDouble(nq.AskSizeChange, nq.PriceType),
+			nxCoreClass.PriceToDouble(nq.BidSizeChange, nq.PriceType));
 	}
 
 	break;
@@ -102,7 +124,7 @@ int main(int argc, char** argv)
 	// Place the python script in the directory containing the tape files.
 	// then replace the line below with the formatted array declaration outputted by the python script i.e. std::string files[1] = {"20080101.GS.nx2"};
 	
-	std::vector<std::string> files = { "C:\\Users\\Josh\\source\\repos\\EveryTrade\\EveryTrade\\20080401.GS.nx2", "C:\\Users\\Josh\\source\\repos\\EveryTrade\\EveryTrade\\20080402.GS.nx2"};
+	std::vector<std::string> files = { "C:\\Users\\Josh\\source\\repos\\EveryTrade\\EveryTrade\\20080401.GS.nx2" };
 	omp_set_num_threads(2);
 	std::cout << omp_get_num_threads() << " threads running\n";
 	#pragma omp parallel for num_threads(2)
@@ -112,6 +134,7 @@ int main(int argc, char** argv)
 			std::cout << "thread " << omp_get_thread_num() << " using file: " << files[i] << std::endl;
 		}
 		std::string s = files[i];
+		std::cout << s << std::endl;
 		nxCoreClass.ProcessTape(s.c_str(), 0, NxCF_EXCLUDE_CRC_CHECK, 0, nxCoreCallback);
 	}
 
