@@ -53,6 +53,8 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 	
 	case NxMSG_TRADE:
 	{
+		FILE* outfile;
+		outfile = std::fopen("output1.txt", "w");
 		const NxCoreTrade& nt = pNxCoreMessage->coreData.Trade;
 		const NxCoreHeader& ch = pNxCoreMessage->coreHeader;
 		const NxTime& t = pNxCoreSys->nxTime;
@@ -62,7 +64,7 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 		{
 			char symbol[23];
 			getSymbol(pNxCoreMessage, symbol);
-			printf("%.2d:%.2d:%.2d.%.3d, Reporting:%s, Listed:%s, %s, Price(%ld@%.2lf), O(%.2lf), H(%.2lf), L(%.2lf), C(%.2lf), V(%I64d), Net(%.2lf)\n",
+			fprintf(outfile, "%.2d:%.2d:%.2d.%.3d, Reporting:%s, Listed:%s, %s, Price(%ld@%.2lf), O(%.2lf), H(%.2lf), L(%.2lf), C(%.2lf), V(%I64d), Net(%.2lf)\n",
 				(int)t.Hour, (int)t.Minute, (int)t.Second, (int)t.Millisecond,
 				rexchange,
 				lexchange,
@@ -81,6 +83,8 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 	
 	case NxMSG_EXGQUOTE:
 	{
+		FILE* outfile;
+		outfile = std::fopen("output1.txt", "w");
 		const NxCoreQuote& nq = pNxCoreMessage->coreData.ExgQuote.coreQuote;
 		const NxCoreHeader& ch = pNxCoreMessage->coreHeader;
 		const NxTime& t = pNxCoreSys->nxTime;
@@ -88,7 +92,7 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 		const char* listedexg = nxCoreClass.GetDefinedString(NxST_EXCHANGE, ch.ListedExg);
 		char symbol[23];
 		getSymbol(pNxCoreMessage, symbol);
-		printf("%.2d:%.2d:%.2d.%.3d, Reporting:%s, Listed:%s, %s, Ask(%ld@%.2lf), Bid(%ld@%.2lf), AskChange(%.2lf), BidChange(%.2lf), AskSizeChange(%.2lf), BidSizeChange(%.2lf)\n",
+		fprintf(outfile, "%.2d:%.2d:%.2d.%.3d, Reporting:%s, Listed:%s, %s, Ask(%ld@%.2lf), Bid(%ld@%.2lf), AskChange(%.2lf), BidChange(%.2lf), AskSizeChange(%.2lf), BidSizeChange(%.2lf)\n",
 			(int)t.Hour, (int)t.Minute, (int)t.Second, (int)t.Millisecond,
 			exchange,
 			listedexg,
