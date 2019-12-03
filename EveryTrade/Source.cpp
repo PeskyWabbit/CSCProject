@@ -19,6 +19,7 @@ int startMinutes = 0;
 int endMinutes = 0;
 std::string file = "";
 std::string ticker = "";
+FILE* outfile = std::fopen("C:\\Users\\Nanex1\\Documents\\output1.txt", "a");
 void getSymbol(const NxCoreMessage* pNxCoreMsg, char* Symbol)
 {
 	// Is this a valid option?
@@ -58,8 +59,7 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 	
 		case NxMSG_TRADE:
 		{
-			FILE* outfile;
-			outfile = std::fopen("C:\\Users\\Nanex1\\Documents\\output1.txt", "a");
+			
 			const NxCoreTrade& nt = pNxCoreMessage->coreData.Trade;
 			const NxCoreHeader& ch = pNxCoreMessage->coreHeader;
 			const NxTime& t = pNxCoreSys->nxTime;
@@ -71,14 +71,14 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 			int lineMinutes = t.Minute;
 			std::string lineTicker = (std::string) ch.pnxStringSymbol->String;
 			if (lineTicker != ticker || (lineHour < startHour) || (lineHour > endHour)) {
-				std::cout << (std::string) ch.pnxStringSymbol->String << " " << ticker << std::endl;
-				std::fclose(outfile);
+				//std::cout << (std::string) ch.pnxStringSymbol->String << " " << ticker << std::endl;
+				
 				break;
 			}
 			if ((startHour == lineHour && lineMinutes >= startMinutes) ||
 				(endHour == lineHour && lineMinutes <= endMinutes) ||
 				(lineHour > startHour&& lineHour < endHour)) {
-				std::cout << "YEEEEEEEEEEEEEEEEEEEEEEET" << std::endl;
+				//std::cout << "YEEEEEEEEEEEEEEEEEEEEEEET" << std::endl;
 				getSymbol(pNxCoreMessage, symbol);
 				fprintf(outfile, "%.2d:%.2d:%.2d.%.3d, Reporting:%s, Listed:%s, %s, Price(%ld@%.2lf), O(%.2lf), H(%.2lf), L(%.2lf), C(%.2lf), V(%I64d), Net(%.2lf)\n",
 					(int)t.Hour, (int)t.Minute, (int)t.Second, (int)t.Millisecond,
@@ -93,14 +93,13 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 					nxCoreClass.PriceToDouble(nt.Last, nt.PriceType),
 					nt.TotalVolume,
 					nxCoreClass.PriceToDouble(nt.NetChange, nt.PriceType));
-				std::fclose(outfile);
 			}
 		}
 	
 		case NxMSG_EXGQUOTE:
 		{
-			FILE* outfile;
-			outfile = std::fopen("C:\\Users\\Nanex1\\Documents\\output1.txt", "a");
+			
+			
 			const NxCoreQuote& nq = pNxCoreMessage->coreData.ExgQuote.coreQuote;
 			const NxCoreHeader& ch = pNxCoreMessage->coreHeader;
 			const NxTime& t = pNxCoreSys->nxTime;
@@ -112,14 +111,15 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 			
 			std::string lineTicker = (std::string) ch.pnxStringSymbol->String;
 			if (lineTicker != ticker || (lineHour < startHour) || (lineHour > endHour)) {
-				std::cout << (std::string) ch.pnxStringSymbol->String << " " << ticker << std::endl;
-				std::fclose(outfile);
+				//std::cout << (std::string) ch.pnxStringSymbol->String << " " << ticker << std::endl;
+				
 				break;
 			}
 			if ((startHour == lineHour && lineMinutes >= startMinutes) ||
 				(endHour == lineHour && lineMinutes <= endMinutes) ||
 				(lineHour > startHour && lineHour < endHour)) {
-				std::cout << "YEEEEEEEEEEEEEEEEEEEEEEET" << std::endl;
+				
+				//std::cout << "YEEEEEEEEEEEEEEEEEEEEEEET" << std::endl;
 				getSymbol(pNxCoreMessage, symbol);
 				fprintf(outfile, "%.2d:%.2d:%.2d.%.3d, Reporting:%s, Listed:%s, %s, Ask(%ld@%.2lf), Bid(%ld@%.2lf), AskChange(%.2lf), BidChange(%.2lf), AskSizeChange(%.2lf), BidSizeChange(%.2lf)\n",
 					(int)t.Hour, (int)t.Minute, (int)t.Second, (int)t.Millisecond,
@@ -134,7 +134,6 @@ int __stdcall nxCoreCallback(const NxCoreSystem* pNxCoreSys, const NxCoreMessage
 					nxCoreClass.PriceToDouble(nq.BidPriceChange, nq.PriceType),
 					nxCoreClass.PriceToDouble(nq.AskSizeChange, nq.PriceType),
 					nxCoreClass.PriceToDouble(nq.BidSizeChange, nq.PriceType));
-				std::fclose(outfile);
 			}
 		}
 
@@ -166,9 +165,11 @@ int main(int argc, char** argv)
 	endHour = std::stoi((std::string) argv[4]);
 	endMinutes = std::stoi((std::string) argv[5]);
 	std::cout << file << " " << ticker << std::endl;
+
 	nxCoreClass.ProcessTape(file.c_str(), 0, NxCF_EXCLUDE_CRC_CHECK, 0, nxCoreCallback);
 	
 	system("pause");
+	std::fclose(outfile);
 	return 0;
 	
 }
